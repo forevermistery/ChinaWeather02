@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/activity_main"
+    android:orientation="vertical"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+
+    tools:context="com.example.administrator.chinaweather02_1.MainActivity"
+    android:weightSum="1">
+<LinearLayout
+    android:id="@+id/ly_1"
+    android:orientation="horizontal"
+    android:layout_width="fill_parent"
+    android:layout_height="wrap_content">
+    <TextView
+        android:id="@+id/tv_chenshi"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="城市:" />
+ <EditText
+     android:id="@+id/et_city"
+     android:layout_width="180dp"
+     android:layout_height="wrap_content"
+     android:textColor="#ff00"
+
+     android:hint="请输入查询城市"/>
+    <Button
+        android:id="@+id/btn_chaxun"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="查询"/>
+</LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/reuslt"
+        android:orientation="vertical"
+        android:layout_weight="1.0"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        >
+
+
+
+    </LinearLayout>
+
+</LinearLayout>
