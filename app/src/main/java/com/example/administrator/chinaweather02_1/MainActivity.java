@@ -31,34 +31,22 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Vector;
 
-public class MainActivity extends AppCompatActivity implements Runnable {
-//    private EditText et_city;
-//    private Button btn_chaxun;
-//    private String result;
-//    private TextView tv_result;
-
-    //    private String weatherUrl="http://weather.com.cn/wmaps/xml/"+result+".xml";
-//    private String weatherIcon="http://m.weather.com.cn/img/c";
-//    URL url=new URL(weatherUrl);
-//    //建立天气预报查询连接
-//    httpConn=(HttpURLConnection)url.openConnection();
-    private HttpURLConnection httpConn;
-    private InputStream din;
-    private Vector<String> cityname = new Vector<String>();
-    private Vector<String> low = new Vector<String>();
-    private Vector<String> high = new Vector<String>();
-    private Vector<String> icon = new Vector<String>();
-    private Vector<Bitmap> bitmap = new Vector<Bitmap>();
-    private Vector<String> summary = new Vector<String>();
-    private int weatherIndex[] = new int[20];
+public class MainActivity extends AppCompatActivity implements Runnable{
+    HttpURLConnection httpURLConnection = null;
+    InputStream din = null;
+    Vector<String> cityname = new Vector<String>();
+    Vector<String> low = new Vector<String>();
+    Vector<String> high = new Vector<String>();
+    Vector<String> icon = new Vector<String>();
+    Vector<Bitmap> bitmap = new Vector<Bitmap>();
+    Vector<String> summary = new Vector<String>();
+    int weatherIndex[] = new int[20];
     String city = "guangzhou";
     boolean bPress = false;
     boolean bHasData = false;
     LinearLayout body;
-    Button find;
+    Button search;
     EditText value;
-
-
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -66,26 +54,18 @@ public class MainActivity extends AppCompatActivity implements Runnable {
         setContentView(R.layout.activity_main);
         setTitle("天气查询");
         body = (LinearLayout) findViewById(R.id.reuslt);
-        find = (Button) findViewById(R.id.btn_chaxun);
+        search = (Button) findViewById(R.id.btn_chaxun);
         value = (EditText) findViewById(R.id.et_city);
-
-//        et_city=(EditText)findViewById(R.id.et_city);
-//        btn_chaxun=(Button)findViewById(R.id.btn_chaxun);
-
-        find.setOnClickListener(new View.OnClickListener() {
+        search.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                body.removeAllViews();
+                body.removeAllViews();//移除当前所有视图
                 city = value.getText().toString();
-                Toast.makeText(MainActivity.this, "正在查询天气信息...请稍等!", Toast.LENGTH_SHORT).show();
-                Thread thread = new Thread(MainActivity.this);
-                thread.start();
-//tv_result.setText(linearLayout);
-//               result=et_city.getText().toString();
-//               tv_result.setText(result);
+                Toast.makeText(MainActivity.this,"正在查询天气信息...",Toast.LENGTH_LONG).show();
+                Thread th = new Thread(MainActivity.this);
+                th.start();
             }
         });
-
     }
 
     @Override
@@ -96,94 +76,72 @@ public class MainActivity extends AppCompatActivity implements Runnable {
         icon.removeAllElements();
         bitmap.removeAllElements();
         summary.removeAllElements();
-
-
-        parseData();   //获取数据
-        downloadImage();//下载图片
+        parseData();
+        downImage();
         Message message = new Message();
         message.what = 1;
         handler.sendMessage(message);
     }
-
-    public void parseData() {
+    public void parseData(){
         int i = 0;
         String sValue;
-        String weatherUrl = "http://weather.com.cn/wmaps/xml/" + city + ".xml";
+        String weatherUrl = "http://flash.weather.com.cn/wmaps/xml/"+city+".xml";
         String weatherIcon = "http://m.weather.com.cn/img/c";
-        URL url = null;
-        try {
-            url = new URL(weatherUrl);
-            httpConn = (HttpURLConnection) url.openConnection();
-            httpConn.setRequestMethod("GET");//采用GET请求方法
-            din = httpConn.getInputStream();
-            //打开输入流
-            XmlPullParser xmlParser = Xml.newPullParser();
-            xmlParser.setInput(din, "UTF-8");
-            int evtType = xmlParser.getEventType();
-            while (evtType != XmlPullParser.END_DOCUMENT)/*一直循环，直到文档结束*/ {
-                switch (evtType) {
+        try{
+            URL url = new URL(weatherUrl);
+            httpURLConnection = (HttpURLConnection) url.openConnection();
+            httpURLConnection.setRequestMethod("GET");
+            din = httpURLConnection.getInputStream();
+            XmlPullParser xmlPullParser = Xml.newPullParser();
+            xmlPullParser.setInput(din,"UTF-8");
+            int evtType = xmlPullParser.getEventType();
+            while(evtType!=XmlPullParser.END_DOCUMENT){
+                switch (evtType){
                     case XmlPullParser.START_TAG:
-                        String tag = xmlParser.getName();
-
-                        if (tag.equalsIgnoreCase("city")) {
-                            cityname.addElement(xmlParser.getAttributeValue(null, "cityname") + "天气:");
-                            summary.addElement(xmlParser.getAttributeValue(null, "stateDetailed"));
-                            low.addElement("最低:" + xmlParser.getAttributeValue(null, "tem2"));
-                            high.addElement("最高:" + xmlParser.getAttributeValue(null, "tem1"));
-                            icon.addElement(weatherIcon + xmlParser.getAttributeValue(null, "state1") + ".gif");
+                        String tag = xmlPullParser.getName();
+                        if(tag.equalsIgnoreCase("city")){
+                            cityname.addElement(xmlPullParser.getAttributeValue(null,"cityname")+"天气：");
+                            summary.addElement(xmlPullParser.getAttributeValue(null,"stateDetailed"));
+                            low.addElement("最低："+xmlPullParser.getAttributeValue(null,"tem2"));
+                            high.addElement("最高："+xmlPullParser.getAttributeValue(null,"tem1"));
+                            icon.addElement(weatherIcon+xmlPullParser.getAttributeValue(null,"state1")+".gif");
                         }
-
                         break;
                     case XmlPullParser.END_TAG:
                     default:
                         break;
                 }
-                evtType = xmlParser.next();
+                evtType = xmlPullParser.next();
             }
-
-        } catch (MalformedURLException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
-        } catch (XmlPullParserException e) {
+        }catch (Exception e){
             e.printStackTrace();
         }
-        //建立天气预报查询连接
-
     }
-
-    public void downloadImage() {
-        int i;
-        for (i = 0; i < icon.size(); i++) {
-            try {
+    private void downImage(){
+        int i = 0;
+        for(i=0;i<icon.size();i++){
+            try{
                 URL url = new URL(icon.elementAt(i));
                 System.out.println(icon.elementAt(i));
-                httpConn = (HttpURLConnection) url.openConnection();
-                httpConn.setRequestMethod("GET");
-                din = httpConn.getInputStream();
-                //图片数据Bitmap
-                bitmap.addElement(BitmapFactory.decodeStream(httpConn.getInputStream()));
-            } catch (MalformedURLException e) {
+                httpURLConnection = (HttpURLConnection) url.openConnection();
+                httpURLConnection.setRequestMethod("GET");
+                din = httpURLConnection.getInputStream();
+                bitmap.addElement(BitmapFactory.decodeStream(httpURLConnection.getInputStream()));
+            }catch (Exception e){
                 e.printStackTrace();
-            } catch (IOException e) {
-                e.printStackTrace();
-            } finally {
-                //释放连接
-                try {
+            }finally {
+                try{
                     din.close();
-                    httpConn.disconnect();
-                } catch (Exception ex) {
-                    ex.printStackTrace();
+                    httpURLConnection.disconnect();
+                }catch (Exception e){
+                    e.printStackTrace();
                 }
             }
-
         }
-
     }
-//显示结果handler
-    private final Handler handler = new Handler() {
-        public void handleMessage(Message msg) {
-            switch (msg.what) {
+    private final Handler handler = new Handler(){
+        public void handleMessage(Message msg){
+            switch (msg.what){
                 case 1:
                     showData();
                     break;
@@ -191,46 +149,46 @@ public class MainActivity extends AppCompatActivity implements Runnable {
             super.handleMessage(msg);
         }
     };
-//显示结果
-    public void showData() {
+    public void showData(){
         body.removeAllViews();
         body.setOrientation(LinearLayout.VERTICAL);
-        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams
-                (LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT);
         params.weight = 80;
         params.height = 50;
-        for (int i = 0; i < cityname.size(); i++) {
+        for(int i = 0;i<cityname.size();i++){
             LinearLayout linearLayout = new LinearLayout(this);
             linearLayout.setOrientation(LinearLayout.HORIZONTAL);
-            //城市
+            //1城市
             TextView dayView = new TextView(this);
             dayView.setLayoutParams(params);
             dayView.setText(cityname.elementAt(i));
             linearLayout.addView(dayView);
-            //描述
+            //2描述
             TextView summaryView = new TextView(this);
             summaryView.setLayoutParams(params);
             summaryView.setText(summary.elementAt(i));
             linearLayout.addView(summaryView);
-            //图标
+            //3天气图标显示
             ImageView icon = new ImageView(this);
             icon.setLayoutParams(params);
             icon.setImageBitmap(bitmap.elementAt(i));
             linearLayout.addView(icon);
-            //最低气温
+            //4最低气温显示
             TextView lowView = new TextView(this);
             lowView.setLayoutParams(params);
             lowView.setText(low.elementAt(i));
             linearLayout.addView(lowView);
-            //最高气温
+            //5最高视图显示
             TextView highView = new TextView(this);
-            lowView.setLayoutParams(params);
-            lowView.setText(high.elementAt(i));
+            highView.setLayoutParams(params);
+            highView.setText(high.elementAt(i));
             linearLayout.addView(highView);
+            //6添加所有的View到总视图中
             body.addView(linearLayout);
         }
     }
 }
+
 /*
     class connectWeatherServer extends  Thread{
         JsonDemo activity;
